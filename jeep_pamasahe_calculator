@@ -1,0 +1,47 @@
+package pamasahecalculator;
+
+import java.util.*;
+
+public class pamasahecalculation {
+
+	public static void main(String[] args) {
+		
+		
+		String discounted;
+		double base_fare = 12, succeeding_fare = 1.8, total_fare, distance;
+
+		Scanner input = new Scanner(System.in);
+		System.out.println("Distance(km)?");
+		distance = input.nextDouble();
+		
+		do{
+			System.out.println("Are you a student/elderly? Y/N");
+			discounted = input.next();
+			discounted = discounted.toUpperCase();
+		} while(discounted.equalsIgnoreCase("Y") || discounted.equalsIgnoreCase("N"));
+		
+		
+		if (discounted.equalsIgnoreCase("Y")) { //Checks if the
+			base_fare = 9.60;
+			succeeding_fare = 1.44;
+		}
+		
+		if (distance < 4) { //Executes when the distance is less than 4kms, this outputs the base fare
+			System.out.printf("The total fare is %, .2f", base_fare);
+					System.out.print(" pesos");
+		} 
+		
+		else {
+			distance -= 4;
+			total_fare = base_fare + distance * succeeding_fare;
+			total_fare = 0.25*(Math.round(total_fare/0.25));
+			System.out.printf("The total fare is %, .2f", total_fare);
+			System.out.print(" pesos");
+		}
+		
+	}
+	
+	 static void invalidInput() {
+		 	System.out.println("Please enter a valid input");
+		  }
+}
