@@ -41,7 +41,8 @@ public class pamasahecalculation {
 		
 	}
 	
-	 static void invalidInput() {
-		 	System.out.println("Please enter a valid input");
-		  }
+//	 static void invalidInput() {
+//		 	System.out.println("Please enter a valid input");
+//		  }
+
 }
