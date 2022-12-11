@@ -1,0 +1,541 @@
+package cce_activities;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+import javax.swing.JOptionPane;
+
+
+public class FinalRequirementCleaned{
+
+	static 	String 	habits[] 			= {"", "", "", "", "", "", "", ""},
+					habit_date_start[] 	= {"00/00/0000", "00/00/0000", "00/00/0000", "00/00/0000", "00/00/0000", "00/00/0000", "00/00/0000", "00/00/0000"},
+					habit_tracker_start_date,
+					delimiter = ", ",
+					input,
+					list = "",
+					filepath_string = "C:\\CCE109\\HabitTracker\\savefile.txt",
+					permanent_data_filepath_string = "C:\\CCE109\\HabitTracker\\permanentdata.txt";
+			
+	static 	int		habit_streak[] 		= {0, 0, 0, 0, 0, 0, 0, 0},
+					habit_num = 0,
+					index = 0, 
+					max_habits = 3,
+					brilliance = 0; //This tracks the total user streak
+
+	static Path filepath = Paths.get(filepath_string),
+				permanent_data_filepath = Paths.get(permanent_data_filepath_string);
+	
+	static boolean 	achievement1 = false,
+					achievement2 = false,
+					achievement3 = false,
+					achievement4 = false,
+					streak_updated = false;
+	
+	/***************************************************************************
+	 * Main
+	 **************************************************************************/
+	
+	public static void main(String[] args) {
+
+		readList();
+		if(habits[0] == "") 
+			welcomeMessage();
+		else {
+			countHabits();
+			checkHabits();
+		}
+		
+	}
+	
+	/***************************************************************************
+	 * Welcome Message - Executed once at the first usage
+	 **************************************************************************/
+	
+	public static void welcomeMessage() {
+		
+		new File("/C:/\\CCE109\\HabitTracker\\").mkdirs();
+		
+		JOptionPane.showMessageDialog(null, "Welcome to HabitTracker! This "
+				+ "application is geared towards helping \nyou build up new ha"
+				+ "bits. Let's get you started by creating your first habit!");
+
+		readPermanentData();
+		
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+		habit_tracker_start_date = dtf.format(LocalDateTime.now());
+		
+		updatePermanentData();
+		newHabitPrompt();
+		
+		
+	}
+	
+	/***************************************************************************
+	 * Permanent Data
+	 **************************************************************************/
+
+	public static void readPermanentData() {
+
+		try {
+
+			BufferedReader reader = new BufferedReader(new FileReader(permanent_data_filepath_string));
+
+			String to_read = reader.readLine();
+
+			String array[] = to_read.split(delimiter);
+			habit_tracker_start_date = array[0];
+			brilliance = Integer.parseInt(array[1]);
+			habit_num = Integer.parseInt(array[2]);
+			achievement1 = Boolean.parseBoolean(array[3]);
+			achievement2 = Boolean.parseBoolean(array[4]);
+			achievement3 = Boolean.parseBoolean(array[5]);
+			achievement4 = Boolean.parseBoolean(array[6]);
+			System.out.println("Current index: " + index + "\nStart Date: " + habit_tracker_start_date + "\nCurrent brilliance: " + brilliance + "\nCurrent habits: " + habit_num);
+
+			reader.close();
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		} catch (NumberFormatException e) {
+			
+			e.printStackTrace();
+		}
+
+	}
+	
+	public static void updatePermanentData() {
+		
+		try {
+			
+			BufferedWriter writer = new BufferedWriter(new FileWriter(permanent_data_filepath_string));
+			
+			writer.write(habit_tracker_start_date + delimiter + brilliance + delimiter + habit_num + delimiter 
+					+ achievement1 + delimiter + achievement2 + delimiter + achievement3 + delimiter + achievement3);
+			writer.close();
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public static void checkHabits() {
+
+		writeList();
+		
+		achievementCheck();
+		
+		updatePermanentData();
+		
+		list = ""; //We reset the list here every time we check habits to prevent other commands from duplicating our text
+		
+		generateList();
+		
+		if(habits[0] == "") {
+		
+			input = JOptionPane.showInputDialog(null, "You are currently tracking no habits. Enter (A) to add habits:\n\n" + list + "Commands:\n(A)dd Habit\n(R)emove Habit\n(H)ow am I doing?\n(X)Exit\n\n");
+			
+		}
+		
+		else {
+
+			input = JOptionPane.showInputDialog(null, "Here's a list of all the habits you're working on:\n\n" + list + "Commands:\n(A)dd Habit\n(R)emove Habit\n(H)ow am I doing?\n(X)Exit\n\nYou can add a streak by typing in the habit number or you can \ntype \"all\" to add a streak to all listed habits");
+			
+		}
+		
+		
+		input = input.toLowerCase();
+		System.out.println(input);
+		String command = input;
+		commandCheck(command);
+
+	}
+
+	
+	public static void commandCheck(String command) {
+
+		switch(command) {
+		
+		
+		case "a":
+			addHabit();
+			break;
+			
+		case "r":
+			removeHabit();
+			break;
+			
+		case "h":
+			brillianceStatus();
+			break;
+			
+		case "x":
+			writeList();
+			System.exit(0);
+			
+		case "all":
+			
+			for(index = 0; index < 7; index++) {
+				if(habits[index] != "") {
+					habit_streak[index]++;
+					brilliance++;
+					updatePermanentData();
+				}
+			}
+			
+			checkHabits();
+			break;
+			
+		default:
+			addStreak(input);
+			break;
+		}
+		
+	}
+	
+	public static void addHabit() {
+		
+		if(habit_num != max_habits) {
+			
+			{
+				
+				
+				for(index = 0 ; index < 7; index++) {
+					
+					int habit_length = habits[index].length();
+					
+					if(habit_length == 0) {
+						
+//						JOptionPane.showMessageDialog(null, "Empty index at index no: " + index);
+						newHabitPrompt();
+						return;
+						
+					}
+					
+				}
+				
+		}
+			
+		} 
+		
+		if(habit_num == max_habits) {
+
+				JOptionPane.showMessageDialog(null, "Number of max habits is reached, it sure is tempting to work on multiple habits at once. "
+						+ "\nHowever we want to build up habits bit by bit. You can unlock more habits to work on once you reach enough brilliance points");
+				checkHabits();
+					
+		}
+
+		
+		
+	}
+	
+	public static void removeHabit() {
+		
+		String list = "";
+		
+		for(index = 0; index < habits.length; index++) {
+			if(habits[index].length() > 0) {
+				list += (index + 1) + ".) " + habits[index] + "\n     Started on: " + habit_date_start[index] + "\n     Current Streak: " + habit_streak[index] + "\n\n";
+			}
+		}
+		
+		input = JOptionPane.showInputDialog(null, "Here's a list of all the habits you're working on:\n\n" + list + "Which one would you like to remove?");
+		index = Integer.parseInt(input);
+		index--;
+		
+		if (habits[index] != null) {
+			
+			habits[index] = "";
+			habit_date_start[index] = "00/00/0000";
+			habit_streak[index] = 0;
+			updatePermanentData();
+			
+		}
+		
+		index = 0;
+		
+		fillEmptySlots();
+		
+		countHabits();
+		
+		checkHabits();
+		
+	}
+	
+	public static void countHabits() {
+		
+		int count = 0;
+
+		for(index = 0; index < 7; index++) {
+			
+			/*	Adds 1 to number of habits if current habit index isn't empty*/
+			if(habits[index] != "") {
+
+				count++;
+
+			}
+			
+			habit_num = count;
+			
+			if(habits[index + 1] == "") {
+				return;
+			}
+
+		}
+		
+		index = 0;
+		
+	}	
+	
+	public static void fillEmptySlots() {
+		
+		for(index = 0; index < 7; index++) {
+			
+			//if current habit index is empty and the next one is empty
+			if(habits[index] == "" && habits[index + 1] != "") {
+				
+				habits[index] = habits[index + 1];
+				habits[index + 1] = "";
+				
+			}
+			
+		} 
+		
+		index = 0;
+		
+	}
+	
+	public static void newHabitPrompt() {
+		
+		input = JOptionPane.showInputDialog("What habit would you like to work on?");
+		
+		if (input != "") {
+			
+			habits[index] = input;
+			
+			try (FileWriter writer = new FileWriter("savefile.txt", true)) {
+
+				writer.write(habits[index] + "\n");
+
+			} catch (IOException e) {
+
+				e.printStackTrace();
+				
+			}
+			DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+			habit_date_start[index] = dtf.format(LocalDateTime.now());
+//			habit_num++;
+		}
+		
+		index = 0;
+		
+		updatePermanentData();
+		
+		countHabits();
+		
+		checkHabits();
+		
+	}
+	
+	public static void addStreak(String array_index) {
+		
+		
+		try{
+			index = Integer.parseInt(array_index);
+			index--;
+			
+			if(index > max_habits) {
+				JOptionPane.showMessageDialog(null, "Invalid index.");
+				checkHabits();
+			}
+			
+		} catch (NumberFormatException nfe) {
+			
+			JOptionPane.showMessageDialog(null, "Invalid input.");
+			checkHabits();
+			
+		}
+		try {
+			if (habits[index] == "") {
+				JOptionPane.showMessageDialog(null, "Specified index is empty.");
+				checkHabits();
+			} else {
+				habit_streak[index]++;
+				brilliance++;
+				updatePermanentData();
+				checkHabits();
+			} 
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+		index = 0;
+		
+	}
+	
+	public static void brillianceStatus() {
+		
+		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+		String current_day = dtf.format(LocalDateTime.now()),
+				to_write = "";
+		
+		int brilliance_to_next_milestone = 0;
+		
+		if(brilliance < 254){
+			brilliance_to_next_milestone = 254 - brilliance;
+		}
+		
+		if(brilliance < 128){
+			brilliance_to_next_milestone = 128 - brilliance;
+		}
+		
+		if(brilliance < 64){
+			brilliance_to_next_milestone = 64 - brilliance;
+		}
+		
+		if(brilliance < 32){
+			brilliance_to_next_milestone = 32 - brilliance;
+		} 
+		
+		if(brilliance > 254){
+			
+			to_write = "As of " + current_day + " you've earned " + brilliance 
+					+ " brilliance points!\n\nYou are tracking " + habit_num + "/" + max_habits + " habits.\nYou have reached the maximum amount of habits to track! "
+					+ "\n\nYou started habit tracking on " + habit_tracker_start_date;
+			
+		} else {
+
+			to_write = "As of " + current_day + " you've earned " + brilliance 
+					+ " brilliance points!\n\nYou are tracking " + habit_num + "/" + max_habits + " habits.\nYou need "
+					+ brilliance_to_next_milestone + " more brilliance points to \nincrease your habit tracking slots to " + (max_habits + 1)
+					+ "\n\nYou started habit tracking on " + habit_tracker_start_date;
+
+		}
+		
+		JOptionPane.showMessageDialog(null, to_write);
+		
+		checkHabits();
+		
+	}
+	
+	private static void achievementCheck() {
+
+		if(brilliance >= 32 && achievement1 == false) {
+			JOptionPane.showMessageDialog(null, "CONGRATULATIONS! You reached 32 brilliance points! Your maximum habits to track is increased by 1");
+			achievement1 = true;
+			max_habits = 4;
+		}
+
+		if(brilliance >= 64 && achievement2 == false) {
+			max_habits++;
+			JOptionPane.showMessageDialog(null, "CONGRATULATIONS! You reached 64 brilliance points! Your maximum habits to track is increased by 1");
+			achievement2 = true;
+			max_habits = 5;
+		}
+
+		if(brilliance >= 128 && achievement3 == false) {
+			max_habits++;
+			JOptionPane.showMessageDialog(null, "CONGRATULATIONS! You reached 128 brilliance points! Your maximum habits to track is increased by 1");
+			achievement3 = true;
+			max_habits = 6;
+		}
+
+		if(brilliance >= 254 && achievement4 == false) {
+			max_habits++;
+			JOptionPane.showMessageDialog(null, "CONGRATULATIONS! 254 days worth of daily habits. You started from zero and now you've reached \n"
+					+ "the point where you're unrecognizable from who you are in the past. Congratulations and lets continue our habit tracking journey!");
+			achievement4 = true;
+			max_habits = 7;
+
+		}
+	}
+	
+/* List related methods */
+	
+	public static void readList() {
+		
+		try {
+			
+			BufferedReader reader = new BufferedReader(new FileReader(filepath_string));
+			
+			String to_read;
+			
+			
+			while((to_read = reader.readLine()) != null) {
+				
+				String array[] = to_read.split(delimiter);
+				habits[index] = array[0];
+				habit_date_start[index] = array[1];
+				habit_streak[index] = Integer.parseInt(array[2]);
+				index++;
+				
+			}
+			
+			generateList();
+			
+			reader.close();
+			System.out.println(list);
+			
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		}
+		
+		index = 0;
+		
+	}
+	
+	public static void writeList() {
+		
+		
+		try {
+			
+			BufferedWriter writer = new BufferedWriter(new FileWriter(filepath_string));
+			
+			for (int index = 0; index < 7; index++) {
+				String to_write = habits[index] + delimiter + habit_date_start[index] + delimiter + habit_streak[index];
+				writer.write(to_write, 0, to_write.length());
+				writer.newLine();
+			}
+			
+			index = 0;
+			
+			writer.close();
+			
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
+	}
+	
+	public static void generateList() {
+		
+		for(index = 0; index < habits.length; index++) {
+			if(habits[index].length() > 0) {
+				list += (index + 1) + ".) " + habits[index] + "\n     Started on: " + habit_date_start[index] + "\n     Current Streak: " + habit_streak[index] + "\n\n";
+			}
+		}
+		
+		index = 0;
+		
+	}
+	
+	
+	
+}
